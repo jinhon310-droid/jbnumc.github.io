@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const SERVER_URL = 'http://localhost:3000'; // 우리가 만든 서버 주소
+  const SERVER_URL = 'https://port-0-jbnumc-mfcb8jgf2ab5add5.sel3.cloudtype.app'; // 우리가 만든 서버 주소
 
   const toolbarOptions = [
     [{ 'font': [] }, { 'size': ['small', false, 'large', 'huge'] }],
