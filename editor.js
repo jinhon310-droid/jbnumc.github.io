@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const SERVER_URL = 'http://jbnumc:3000'; // 우리가 만든 서버 주소
+ const response = await fetch('/api/content')
 
   const toolbarOptions = [
     [{ 'font': [] }, { 'size': ['small', false, 'large', 'huge'] }],
