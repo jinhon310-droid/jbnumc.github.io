@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
- const response = await fetch('/app/content');
+  const SERVER_URL = 'http://localhost:3000'; // 우리가 만든 서버 주소
 
   const toolbarOptions = [
     [{ 'font': [] }, { 'size': ['small', false, 'large', 'huge'] }],
