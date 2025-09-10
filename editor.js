@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const SERVER_URL = 'http://localhost:3000'; // 우리가 만든 서버 주소
+  const SERVER_URL = ''; // 서버의 현재 주소로 API 요청을 보냅니다.
 
   const toolbarOptions = [
     [{ 'font': [] }, { 'size': ['small', false, 'large', 'huge'] }],
@@ -29,92 +29,90 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const response = await fetch(`${SERVER_URL}/api/content`);
       if (!response.ok) throw new Error('서버에서 데이터를 불러오는 데 실패했습니다.');
-      const content = await response.json();
+      const data = await response.json();
 
-      // Quill 에디터 내용 적용
-      quillHosts.forEach(host => {
+      // Quill 에디터에 콘텐츠 적용
+      quillHosts.forEach((host) => {
         const key = host.dataset.key;
-        if (content[`quill::${key}`]) {
-          host.__quill.root.innerHTML = content[`quill::${key}`];
+        if (data[key]) {
+          try {
+            host.__quill.setContents(JSON.parse(data[key]));
+          } catch (e) {
+            console.error('Quill JSON 파싱 오류', e);
+          }
         }
       });
 
-      // 일반 편집 가능 영역 내용 적용
-      editables.forEach(el => {
-        const key = el.dataset.key;
-        if (content[`editable::${key}`]) {
-          el.innerHTML = content[`editable::${key}`];
+      // 일반 편집 가능 요소에 콘텐츠 적용
+      editables.forEach(elem => {
+        const key = elem.dataset.key;
+        if (data[key]) {
+          elem.innerHTML = data[key];
         }
       });
-
-      // 이미지 소스 적용
+      
+      // 이미지 적용
       images.forEach(img => {
         const key = img.dataset.storageKey;
-        if (content[`img::${key}`]) {
-          img.src = content[`img::${key}`];
+        if (data[key]) {
+          img.src = data[key];
         }
       });
-
+      console.log('콘텐츠 로드 성공!');
     } catch (error) {
       console.error('콘텐츠 로드 오류:', error);
-      // alert('페이지 콘텐츠를 불러오는 데 실패했습니다.');
+      alert('콘텐츠 로드에 실패했습니다. 서버가 실행 중인지 확인하세요.');
     }
   }
 
-  // 저장 버튼 이벤트 리스너 (서버로 데이터 전송)
-  const saveBtn = document.getElementById('saveBtn');
-  if (saveBtn) {
-    saveBtn.addEventListener('click', async () => {
-      const contentToSave = {};
+  // 콘텐츠를 서버에 저장하는 함수
+  async function saveContent() {
+    const contentToSave = {};
 
-      quillHosts.forEach(host => {
-        const key = host.dataset.key;
-        contentToSave[`quill::${key}`] = host.__quill.root.innerHTML;
-      });
-      editables.forEach(el => {
-        const key = el.dataset.key;
-        contentToSave[`editable::${key}`] = el.innerHTML;
-      });
-      images.forEach(img => {
-        const key = img.dataset.storageKey;
-        contentToSave[`img::${key}`] = img.src;
-      });
-
-      try {
-        const response = await fetch(`${SERVER_URL}/api/content`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(contentToSave)
-        });
-        if (!response.ok) throw new Error('저장에 실패했습니다.');
-        
-        const result = await response.json();
-        alert('성공적으로 저장되었습니다.');
-        console.log(result.message);
-
-      } catch (error) {
-        console.error('저장 오류:', error);
-        alert('서버에 저장하는 중 오류가 발생했습니다.');
-      }
+    // Quill 에디터 콘텐츠 추출
+    quillHosts.forEach((host) => {
+      const key = host.dataset.key;
+      contentToSave[key] = JSON.stringify(host.__quill.getContents());
     });
-  }
+    
+    // 일반 편집 가능 요소 콘텐츠 추출
+    editables.forEach(elem => {
+      const key = elem.dataset.key;
+      contentToSave[key] = elem.innerHTML;
+    });
 
-  // --- 기존 편집 모드 토글 및 기타 기능 (수정 없음) ---
-  let adminPassword = localStorage.getItem("site::admin-password") || "admin123";
-  function changePassword() {
-    const newPw = prompt("새 비밀번호를 입력하세요 (4자 이상):");
-    if (newPw && newPw.length >= 4) {
-      localStorage.setItem("site::admin-password", newPw);
-      adminPassword = newPw;
-      alert("비밀번호가 변경되었습니다.");
+    // 이미지 추출
+    images.forEach(img => {
+      const key = img.dataset.storageKey;
+      contentToSave[key] = img.src;
+    });
+
+    try {
+      const response = await fetch(`${SERVER_URL}/api/content`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contentToSave)
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || '저장 실패');
+      alert('콘텐츠가 성공적으로 저장되었습니다!');
+    } catch (error) {
+      console.error('콘텐츠 저장 오류:', error);
+      alert('콘텐츠 저장에 실패했습니다. 서버가 실행 중인지 확인하세요.');
     }
   }
 
-  const toggleBtn = document.getElementById('editToggle');
+  const adminPassword = "test"; // 실제 사용 시에는 이 비밀번호를 외부에 노출하지 않도록 주의해야 합니다.
+
+  const toggleBtn = document.getElementById('toggle-edit-mode');
+  const saveBtn = document.getElementById('save-content');
+  
+  if (saveBtn) saveBtn.addEventListener('click', saveContent);
+
   function setEditing(on) {
     document.body.classList.toggle('editing', on);
-    quillHosts.forEach(h => on ? h.__quill.enable() : h.__quill.disable());
-    editables.forEach(el => el.setAttribute('contenteditable', on ? 'true' : 'false'));
+    quillHosts.forEach(host => host.__quill.enable(on));
+    editables.forEach(elem => elem.setAttribute('contenteditable', on ? 'true' : 'false'));
     if (saveBtn) saveBtn.style.display = on ? 'inline-block' : 'none';
     if (toggleBtn) toggleBtn.textContent = on ? '✅ 편집자 모드 끄기' : '✏️ 편집자 모드 켜기';
     if (toggleBtn) toggleBtn.dataset.editing = on ? '1' : '0';
@@ -148,16 +146,20 @@ document.addEventListener("DOMContentLoaded", () => {
       const target = document.querySelector(selector);
       reader.onload = ev => {
         if (target) {
-            target.src = ev.target.result;
+          target.src = ev.target.result;
+          saveContent();
         }
       };
       reader.readAsDataURL(file);
-      input.value = '';
     });
   });
 
-  // 페이지가 로드될 때 서버에서 콘텐츠를 불러오도록 실행
   loadContentFromServer();
-  // 초기 상태는 읽기 전용으로 설정
-  setEditing(false);
 });
+
+function changePassword() {
+  const newPassword = prompt("새로운 편집자 모드 비밀번호를 입력하세요:");
+  if (newPassword) {
+    alert("죄송합니다. 현재 버전에서는 비밀번호 변경 기능이 지원되지 않습니다.");
+  }
+}
