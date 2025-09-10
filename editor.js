@@ -13,25 +13,21 @@ document.addEventListener("DOMContentLoaded", () => {
     ['clean']
   ];
 
-  // 각 편집 요소들을 변수에 저장
   const quillHosts = Array.from(document.querySelectorAll('.quill-editor'));
   const editables = Array.from(document.querySelectorAll('.editable[data-key]'));
   const images = Array.from(document.querySelectorAll('img[data-storage-key]'));
 
-  // Quill 에디터 초기화
   quillHosts.forEach((host) => {
     const q = new Quill(host, { theme: 'snow', modules: { toolbar: toolbarOptions } });
     host.__quill = q;
   });
 
-  // 서버에서 콘텐츠를 로드하여 페이지에 적용하는 함수
   async function loadContentFromServer() {
     try {
       const response = await fetch(`${SERVER_URL}/api/content`);
       if (!response.ok) throw new Error('서버에서 데이터를 불러오는 데 실패했습니다.');
       const data = await response.json();
 
-      // Quill 에디터에 콘텐츠 적용
       quillHosts.forEach((host) => {
         const key = host.dataset.key;
         if (data[key]) {
@@ -43,7 +39,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
 
-      // 일반 편집 가능 요소에 콘텐츠 적용
       editables.forEach(elem => {
         const key = elem.dataset.key;
         if (data[key]) {
@@ -51,7 +46,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
       
-      // 이미지 적용
       images.forEach(img => {
         const key = img.dataset.storageKey;
         if (data[key]) {
@@ -65,23 +59,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // 콘텐츠를 서버에 저장하는 함수
   async function saveContent() {
     const contentToSave = {};
 
-    // Quill 에디터 콘텐츠 추출
     quillHosts.forEach((host) => {
       const key = host.dataset.key;
       contentToSave[key] = JSON.stringify(host.__quill.getContents());
     });
     
-    // 일반 편집 가능 요소 콘텐츠 추출
     editables.forEach(elem => {
       const key = elem.dataset.key;
       contentToSave[key] = elem.innerHTML;
     });
 
-    // 이미지 추출
     images.forEach(img => {
       const key = img.dataset.storageKey;
       contentToSave[key] = img.src;
@@ -102,8 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  const adminPassword = "test"; // 실제 사용 시에는 이 비밀번호를 외부에 노출하지 않도록 주의해야 합니다.
-
+  const adminPassword = "test";
   const toggleBtn = document.getElementById('toggle-edit-mode');
   const saveBtn = document.getElementById('save-content');
   
