@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
- const response = await fetch('/api/content');
+ const response = await fetch('/app/content');
 
   const toolbarOptions = [
     [{ 'font': [] }, { 'size': ['small', false, 'large', 'huge'] }],
